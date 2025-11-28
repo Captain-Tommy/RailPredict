@@ -30,28 +30,7 @@
 
 ---
 
-## 🛠️ Installation & Setup
 
-1.  **Clone the Repository**
-    ```bash
-    git clone https://github.com/Captain-Tommy/RailPredict.git
-    cd RailPredict
-    ```
-
-2.  **Install Dependencies**
-    ```bash
-    pip install -r requirements.txt
-    ```
-
-3.  **Run the Application**
-    ```bash
-    python app.py
-    ```
-
-4.  **Access the App**
-    Open your browser and visit `http://127.0.0.1:5001`
-
----
 
 ## 🧠 How It Works
 
