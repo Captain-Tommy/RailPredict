@@ -1,4 +1,3 @@
-import pandas as pd
 import os
 import numpy as np
 from sklearn.ensemble import RandomForestClassifier
@@ -20,10 +19,8 @@ class WaitlistPredictor:
     def generate_synthetic_data(self, num_samples=1000):
         """
         Generates synthetic historical data for training.
-        Simulates the logic: 
-        - High WL + Short Duration = Low Chance
-        - Low WL + Long Duration = High Chance
         """
+        import pandas as pd # Import locally to avoid runtime dependency
         print(f"Generating {num_samples} synthetic records for training...")
         
         data = []
@@ -85,13 +82,9 @@ class WaitlistPredictor:
         print("Model saved to wl_prediction_model.pkl")
 
     def predict(self, days_to_journey, current_wl, is_weekend=0, is_holiday=0):
-        # Load if not loaded (omitted for simplicity, assuming instance usage)
-        features = pd.DataFrame([{
-            'days_to_journey': days_to_journey,
-            'current_wl': current_wl,
-            'is_weekend': is_weekend,
-            'is_holiday': is_holiday
-        }])
+        # Use list of lists for prediction to avoid pandas dependency
+        # Feature order must match training: ['days_to_journey', 'current_wl', 'is_weekend', 'is_holiday']
+        features = [[days_to_journey, current_wl, is_weekend, is_holiday]]
         
         prob = self.model.predict_proba(features)[0][1]
         
