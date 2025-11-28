@@ -5,6 +5,8 @@
 ![Scikit-Learn](https://img.shields.io/badge/scikit--learn-F7931E?style=for-the-badge&logo=scikit-learn&logoColor=white)
 ![Vercel](https://img.shields.io/badge/Vercel-Deployed-000000?style=for-the-badge&logo=vercel&logoColor=white)
 
+[**🚀 Live Deployment: https://rail-predict.vercel.app/**](https://rail-predict.vercel.app/)
+
 **RailPredict** is a premium, AI-powered application designed to predict the confirmation probability of Indian Railways waitlisted tickets. Combining advanced machine learning with a stunning, responsive Glassmorphism UI, it delivers next-generation travel intelligence.
 
 ---
