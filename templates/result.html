@@ -1,0 +1,540 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Analysis Result | RailPredict</title>
+    <link rel="icon" type="image/png" href="{{ url_for('static', filename='favicon.png') }}">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #000000;
+            --glass-bg: rgba(20, 20, 20, 0.8);
+            /* Darker, more opaque for readability */
+            --glass-border: rgba(255, 255, 255, 0.15);
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --accent-color: #00d2ff;
+            --success-color: #00ff87;
+            --warning-color: #ffb347;
+            --danger-color: #ff6b6b;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            height: 100vh;
+            margin: 0;
+            padding: clamp(10px, 2vw, 20px);
+            box-sizing: border-box;
+            overflow: hidden;
+            /* Default to no scroll for desktop */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Background Orbs */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.3;
+        }
+
+        .orb-1 {
+            width: 40vw;
+            height: 40vw;
+            background: #8e2de2;
+            top: -10vw;
+            left: -10vw;
+            max-width: 400px;
+            max-height: 400px;
+        }
+
+        .orb-2 {
+            width: 50vw;
+            height: 50vw;
+            background: #4a00e0;
+            bottom: -10vw;
+            right: -10vw;
+            max-width: 500px;
+            max-height: 500px;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            /* Split screen */
+            gap: clamp(15px, 2vw, 20px);
+            width: 100%;
+            max-width: 1200px;
+            height: 100%;
+            max-height: 90vh;
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(15px, 2vw, 20px);
+            height: 100%;
+            min-height: 0;
+            /* Critical for flex child scrolling */
+        }
+
+        .right-panel {
+            height: 100%;
+            min-height: 0;
+            /* Critical for flex child scrolling */
+        }
+
+        .card {
+            background: var(--glass-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-radius: 24px;
+            border: 1px solid var(--glass-border);
+            padding: clamp(15px, 2vw, 24px);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .train-header {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .train-info {
+            min-width: 0;
+            /* Allow text truncation */
+        }
+
+        .train-info h2 {
+            margin: 0 0 5px 0;
+            font-size: clamp(1.2rem, 2.5vw, 1.5rem);
+            background: linear-gradient(to right, #fff, #ccc);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .train-route {
+            color: var(--accent-color);
+            font-size: clamp(0.8rem, 1.5vw, 0.9rem);
+            font-weight: 500;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .tags {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .tag {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            border: 1px solid var(--glass-border);
+            white-space: nowrap;
+        }
+
+        /* Stats Row */
+        .stats-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: clamp(15px, 2vw, 20px);
+            flex-grow: 1;
+            min-height: 0;
+        }
+
+        .prediction-card {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .circular-chart {
+            display: block;
+            margin: 10px auto;
+            max-width: 100%;
+            max-height: 180px;
+            width: clamp(120px, 20vw, 180px);
+        }
+
+        .circle-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 3.8;
+        }
+
+        .circle {
+            fill: none;
+            stroke-width: 2.8;
+            stroke-linecap: round;
+            animation: progress 1s ease-out forwards;
+        }
+
+        @keyframes progress {
+            0% {
+                stroke-dasharray: 0 100;
+            }
+        }
+
+        .percentage-text {
+            fill: #fff;
+            font-family: 'Outfit', sans-serif;
+            font-weight: bold;
+            font-size: 0.5em;
+            text-anchor: middle;
+        }
+
+        .label-text {
+            fill: #aaa;
+            font-family: 'Outfit', sans-serif;
+            font-size: 0.15em;
+            text-anchor: middle;
+        }
+
+        .stats-details {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        .stat-box {
+            background: rgba(0, 0, 0, 0.2);
+            padding: 15px;
+            border-radius: 16px;
+            text-align: center;
+        }
+
+        .stat-val {
+            font-size: clamp(1.2rem, 2vw, 1.4rem);
+            font-weight: 700;
+            color: var(--text-primary);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* Factors Panel */
+        .factors-card {
+            height: 100%;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            /* Hide overflow of card */
+        }
+
+        .factors-content {
+            overflow-y: auto;
+            /* Scroll inside the card if needed */
+            flex-grow: 1;
+            padding-right: 5px;
+            -webkit-overflow-scrolling: touch;
+            /* Smooth scroll on iOS */
+        }
+
+        /* Custom Scrollbar */
+        .factors-content::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .factors-content::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .factors-content::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 3px;
+        }
+
+        h3 {
+            margin-top: 0;
+            margin-bottom: 20px;
+            font-weight: 600;
+            color: var(--text-primary);
+            flex-shrink: 0;
+            font-size: clamp(1.1rem, 2vw, 1.3rem);
+        }
+
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0 8px;
+        }
+
+        th {
+            text-align: left;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding: 0 15px;
+            position: sticky;
+            top: 0;
+            background: #0a0a0a;
+            /* Match bg approx */
+            z-index: 1;
+            padding-bottom: 10px;
+        }
+
+        td {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 15px;
+            font-size: 0.9rem;
+        }
+
+        td:first-child {
+            border-top-left-radius: 12px;
+            border-bottom-left-radius: 12px;
+        }
+
+        td:last-child {
+            border-top-right-radius: 12px;
+            border-bottom-right-radius: 12px;
+            text-align: right;
+        }
+
+        .impact-badge {
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .back-btn {
+            display: block;
+            width: fit-content;
+            margin: 20px auto 0;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+            flex-shrink: 0;
+        }
+
+        .back-btn:hover {
+            color: var(--text-primary);
+        }
+
+        /* Tablet/Mobile Breakpoints */
+        @media (max-width: 1024px) {
+            .dashboard {
+                gap: 15px;
+            }
+        }
+
+        @media (max-width: 900px) {
+            body {
+                height: auto;
+                min-height: 100vh;
+                overflow-y: auto;
+                display: block;
+                padding: 15px;
+            }
+
+            .dashboard {
+                grid-template-columns: 1fr;
+                height: auto;
+                max-height: none;
+                display: flex;
+                flex-direction: column;
+                gap: 20px;
+            }
+
+            .left-panel {
+                height: auto;
+                gap: 15px;
+            }
+
+            .right-panel {
+                height: auto;
+            }
+
+            .card {
+                padding: 20px;
+            }
+
+            .stats-row {
+                grid-template-columns: 1fr 1fr;
+                /* Keep side-by-side on tablet */
+                gap: 15px;
+            }
+
+            .factors-card {
+                height: auto;
+                max-height: none;
+                /* Let it grow */
+            }
+
+            /* On mobile, table might need horizontal scroll if very narrow */
+            .factors-content {
+                overflow-x: auto;
+            }
+        }
+
+        @media (max-width: 600px) {
+            .stats-row {
+                grid-template-columns: 1fr;
+                /* Stack on small mobile */
+            }
+
+            .train-header {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .train-route {
+                justify-content: center;
+            }
+
+            .tags {
+                justify-content: center;
+            }
+
+            th,
+            td {
+                padding: 10px;
+                font-size: 0.85rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+
+    <div class="dashboard">
+        <!-- Left Panel: Info & Stats -->
+        <div class="left-panel">
+            <!-- Header Card -->
+            <div class="card train-header">
+                <div class="train-info">
+                    <h2>{{ train.name }}</h2>
+                    <div class="train-route">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M9 18l6-6-6-6" />
+                        </svg>
+                        {{ train.source }} ➝ {{ train.dest }}
+                    </div>
+                    <div class="tags">
+                        <div class="tag">{{ train.speed }}</div>
+                        <div class="tag">{{ train_no }}</div>
+                        <div class="tag">{{ train.composition.split(',')[0] }}...</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Row -->
+            <div class="stats-row">
+                <!-- Prediction -->
+                <div class="card prediction-card">
+                    <h3>Probability</h3>
+                    <svg viewBox="0 0 36 36" class="circular-chart">
+                        <path class="circle-bg"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <path class="circle"
+                            stroke="{{ '#00ff87' if probability > 70 else '#ffb347' if probability > 40 else '#ff6b6b' }}"
+                            stroke-dasharray="{{ probability }}, 100"
+                            d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                        <text x="18" y="20.35" class="percentage-text">{{ probability }}%</text>
+                        <text x="18" y="25" class="label-text">CHANCE</text>
+                    </svg>
+                </div>
+
+                <!-- Details -->
+                <div class="card stats-details">
+                    <div class="stat-box">
+                        <div class="stat-val" style="color: #ffb347">WL{{ wl_status }}</div>
+                        <div class="stat-label">Current Status</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val">{{ days }}</div>
+                        <div class="stat-label">Days Left</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-val" style="font-size: 1.1rem; color: {{ chart_color }}">{{ chart_status }}
+                        </div>
+                        <div class="stat-label">Chart Status</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Factors -->
+        <div class="right-panel">
+            <div class="card factors-card">
+                <h3>Factor Analysis</h3>
+                <div class="factors-content">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Factor</th>
+                                <th>Value</th>
+                                <th style="text-align: right;">Impact</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for factor in factors %}
+                            <tr>
+                                <td>{{ factor.name }}</td>
+                                <td><strong>{{ factor.value }}</strong></td>
+                                <td>
+                                    <span class="impact-badge"
+                                        style="background: {{ factor.color }}20; color: {{ factor.color }}">
+                                        {{ factor.impact }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                <a href="/" class="back-btn">← Analyze Another Train</a>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
